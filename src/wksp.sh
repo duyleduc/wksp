@@ -75,10 +75,9 @@ iterate_projects_and_return_map() {
     local projects=($(read_file "$file"))
 
     # Iterate over the projects array and process each pair
-    for ((i = 0; i < ${#projects[@]}; i += 2)); do
-        local project="${projects[i]}"
-        local repo="${projects[i + 1]}"
-
+    for ((i = 1; i < ${#projects[@]}; i += 2)); do
+        local repo="${projects[i]}"
+        local project="${projects[i + 1]}"
         project_repo_map["$project"]="$repo"
     done
 
@@ -97,10 +96,10 @@ _add() {
     eval "$project_repo_map"
 
     # Access the associative array
-    for project in ${(k)project_repo_map}; do
+    for project in ${(v)project_repo_map}; do
         if [[ "${folder_name}" == "${project}" ]]; then
             log WARNING "${folder_name} already added"
-            exit 1
+            return 1
         fi
     done
 
@@ -130,11 +129,10 @@ _goto() {
     eval "$project_repo_map"
 
     # Access the associative array
-    for project in ${(v)project_repo_map}; do
-        local project_non_intensive=$(echo "$project" | tr '[:upper:]' '[:lower:]')
-        echo "${project_non_intensive}"
+    for project in ${(k)project_repo_map}; do
+        local project_non_intensive=$(echo "${project_repo_map[${project}]}" | tr '[:upper:]' '[:lower:]')
         if [[ "${folder}" == "${project_non_intensive}" ]]; then
-            cd "${project_repo_map[${project}]}"
+            cd "${project}" || return 1
             echo -e '\nHit [Ctrl]+[D] to exit this child shell.'
             # Start a new child shell and store its PID
             $SHELL
